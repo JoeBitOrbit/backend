@@ -79,8 +79,24 @@ router.get('/:page/:limit', async (req, res) => {
 
     const total = await Order.countDocuments();
 
+    // Transform orders to match frontend expectations
+    const transformedOrders = orders.map(order => ({
+      orderID: order._id.toString(),
+      _id: order._id.toString(),
+      name: order.shippingAddress?.street || 'N/A',
+      email: order.user?.email || 'guest@example.com',
+      phone: order.shippingAddress?.zipCode || 'N/A',
+      address: `${order.shippingAddress?.street}, ${order.shippingAddress?.city}` || 'N/A',
+      total: order.totalPrice,
+      status: order.status,
+      date: order.createdAt,
+      items: order.orderItems || [],
+      notes: order.notes || ''
+    }));
+
     res.json({
-      orders,
+      orders: transformedOrders,
+      totalPages: Math.ceil(total / limit),
       pagination: {
         page,
         limit,
@@ -114,6 +130,41 @@ router.get('/', async (req, res) => {
   try {
     const orders = await Order.find({}).populate('user', 'id name');
     res.json(orders);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// @route   PUT /api/orders/:id
+// @desc    Update order status and notes
+router.put('/:id', async (req, res) => {
+  try {
+    const { status, notes } = req.body;
+    const order = await Order.findByIdAndUpdate(
+      req.params.id,
+      { status, notes },
+      { new: true }
+    );
+    if (order) {
+      res.json(order);
+    } else {
+      res.status(404).json({ message: 'Order not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// @route   DELETE /api/orders/:id
+// @desc    Delete an order
+router.delete('/:id', async (req, res) => {
+  try {
+    const order = await Order.findByIdAndDelete(req.params.id);
+    if (order) {
+      res.json({ message: 'Order deleted successfully', order });
+    } else {
+      res.status(404).json({ message: 'Order not found' });
+    }
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

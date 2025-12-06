@@ -38,6 +38,20 @@ router.post('/', async (req, res) => {
   }
 });
 
+// Get all tickets (admin only)
+router.get('/', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin' && req.user.role !== 'moderator') {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    const tickets = await Ticket.find({}).populate('user', 'name email').sort({ createdAt: -1 });
+    res.json(tickets);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // Get user's tickets
 router.get('/user/:userId', authenticateToken, async (req, res) => {
   try {
@@ -61,20 +75,6 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Get all tickets (admin only)
-router.get('/', authenticateToken, async (req, res) => {
-  try {
-    if (req.user.role !== 'admin' && req.user.role !== 'moderator') {
-      return res.status(403).json({ message: 'Access denied' });
-    }
-
-    const tickets = await Ticket.find({}).populate('user', 'name email').sort({ createdAt: -1 });
-    res.json(tickets);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
 // Reply to ticket (admin only)
 router.put('/:id/reply', authenticateToken, async (req, res) => {
   try {
@@ -82,12 +82,13 @@ router.put('/:id/reply', authenticateToken, async (req, res) => {
       return res.status(403).json({ message: 'Access denied' });
     }
 
-    const { reply, status } = req.body;
+    const { message, reply, status } = req.body;
+    const replyText = message || reply; // Accept both 'message' and 'reply' fields
 
     const ticket = await Ticket.findByIdAndUpdate(
       req.params.id,
       {
-        adminReply: reply,
+        adminReply: replyText,
         adminRepliedAt: new Date(),
         status: status || 'in-progress'
       },
@@ -100,7 +101,7 @@ router.put('/:id/reply', authenticateToken, async (req, res) => {
 
     // Send reply email
     try {
-      await sendTicketReplyNotification(ticket.email, ticket.name, reply);
+      await sendTicketReplyNotification(ticket.email, ticket.name, replyText);
     } catch (emailError) {
       console.log('Failed to send reply email:', emailError);
     }
