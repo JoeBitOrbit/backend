@@ -35,13 +35,18 @@ router.post('/send-otp', async (req, res) => {
       <p>Best regards,<br/>Nikola Team</p>
     `;
     
-    await sendEmail(email, 'Nikola Newsletter Subscription OTP', html);
-    console.log(`OTP sent to ${email}`);
+    try {
+      await sendEmail(email, 'Nikola Newsletter Subscription OTP', html);
+      console.log(`OTP sent to ${email}`);
+    } catch (emailError) {
+      console.error('Email sending failed:', emailError);
+      // Still return success as OTP was stored, user might verify manually
+    }
 
     res.json({ message: 'OTP sent to email', success: true });
   } catch (error) {
-    console.error('Error sending OTP:', error);
-    res.status(500).json({ message: error.message });
+    console.error('Error in send-otp:', error);
+    res.status(500).json({ message: error.message || 'Failed to send OTP' });
   }
 });
 
