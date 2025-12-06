@@ -2,6 +2,7 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import { authenticateToken } from '../middleware/auth.js';
+import axios from 'axios';
 
 const router = express.Router();
 
@@ -39,6 +40,52 @@ router.post('/register', async (req, res) => {
       });
     }
   } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// @route   POST /api/users/google-login
+// @desc    Login with Google OAuth token
+router.post('/google-login', async (req, res) => {
+  try {
+    const { token } = req.body;
+    
+    if (!token) {
+      return res.status(400).json({ message: 'Google token is required' });
+    }
+
+    // Verify token with Google
+    const response = await axios.get(
+      `https://www.googleapis.com/oauth2/v1/userinfo?access_token=${token}`
+    );
+
+    const { email, name, picture } = response.data;
+
+    if (!email) {
+      return res.status(400).json({ message: 'Could not get email from Google' });
+    }
+
+    // Find or create user
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      user = await User.create({
+        name: name || email.split('@')[0],
+        email,
+        password: 'google-oauth-' + Math.random().toString(36).substr(2, 9), // Random password for OAuth users
+        role: 'user'
+      });
+    }
+
+    res.json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      token: generateToken(user._id, user.role)
+    });
+  } catch (error) {
+    console.error('Google login error:', error);
     res.status(400).json({ message: error.message });
   }
 });
