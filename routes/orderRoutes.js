@@ -3,13 +3,10 @@ import Order from '../models/Order.js';
 
 const router = express.Router();
 
-// @route   POST /api/orders
-// @desc    Create new order
 router.post('/', async (req, res) => {
   try {
     console.log('Order POST received:', JSON.stringify(req.body).substring(0, 200));
     
-    // Support both formats: from checkout page and from admin
     const orderItems = req.body.orderItems || (req.body.items ? req.body.items.map(item => ({
       name: item.name,
       quantity: item.qty || item.quantity,
