@@ -186,4 +186,48 @@ router.get('/all', authenticateToken, async (req, res) => {
   }
 });
 
+// @route   POST /api/users/:id/toggle-block
+// @desc    Toggle user block status
+router.post('/:id/toggle-block', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    user.isActive = !user.isActive;
+    await user.save();
+    
+    res.json({ 
+      success: true, 
+      message: user.isActive ? 'User unblocked' : 'User blocked',
+      user 
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// @route   POST /api/users/:id/toggle-role
+// @desc    Toggle user admin role
+router.post('/:id/toggle-role', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    user.role = user.role === 'admin' ? 'user' : 'admin';
+    await user.save();
+    
+    res.json({ 
+      success: true, 
+      message: user.role === 'admin' ? 'User promoted to admin' : 'User role revoked',
+      user 
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 export default router;

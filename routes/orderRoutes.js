@@ -114,47 +114,17 @@ router.post('/', async (req, res) => {
   }
 });
 
-// GET ALL ORDERS WITH PAGINATION - supports both /page/:pageNum and /:page/:limit formats
-router.get('/:page/:limit', async (req, res) => {
+// GET ALL ORDERS (NO PAGINATION) - Must be before /:id route
+router.get('/', async (req, res) => {
   try {
-    const page = Math.max(1, parseInt(req.params.page) || 1);
-    const limit = Math.max(1, parseInt(req.params.limit) || 10);
-    const skip = (page - 1) * limit;
-
-    const [orders, total] = await Promise.all([
-      Order.find({})
-        .populate('user', 'name email phone')
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit),
-      Order.countDocuments()
-    ]);
-
-    const transformedOrders = orders.map(order => ({
-      _id: order._id,
-      orderID: order._id.toString(),
-      name: order.shippingAddress?.street || 'Guest',
-      email: order.shippingAddress?.phone || 'guest@example.com',
-      phone: order.shippingAddress?.phone || 'N/A',
-      address: `${order.shippingAddress?.street}, ${order.shippingAddress?.city}`,
-      total: order.totalPrice || 0,
-      status: order.status,
-      notes: order.notes || '',
-      date: order.createdAt,
-      itemCount: order.orderItems?.length || 0,
-      isPaid: order.isPaid
-    }));
+    const orders = await Order.find({})
+      .populate('user', 'name email')
+      .sort({ createdAt: -1 });
 
     res.json({
       success: true,
-      orders: transformedOrders,
-      totalPages: Math.ceil(total / limit),
-      pagination: {
-        current: page,
-        total: Math.ceil(total / limit),
-        count: orders.length,
-        totalRecords: total
-      }
+      count: orders.length,
+      orders
     });
 
   } catch (error) {
@@ -165,7 +135,7 @@ router.get('/:page/:limit', async (req, res) => {
   }
 });
 
-// GET ALL ORDERS WITH PAGINATION (alternate format)
+// GET ALL ORDERS WITH PAGINATION (alternate format) - Must be before /:id
 router.get('/page/:pageNum', async (req, res) => {
   try {
     const page = Math.max(1, parseInt(req.params.pageNum) || 1);
@@ -216,7 +186,58 @@ router.get('/page/:pageNum', async (req, res) => {
   }
 });
 
-// GET ORDER BY ID
+// GET ALL ORDERS WITH PAGINATION - supports /:page/:limit format - Must be before /:id
+router.get('/:page/:limit', async (req, res) => {
+  try {
+    const page = Math.max(1, parseInt(req.params.page) || 1);
+    const limit = Math.max(1, parseInt(req.params.limit) || 10);
+    const skip = (page - 1) * limit;
+
+    const [orders, total] = await Promise.all([
+      Order.find({})
+        .populate('user', 'name email phone')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Order.countDocuments()
+    ]);
+
+    const transformedOrders = orders.map(order => ({
+      _id: order._id,
+      orderID: order._id.toString(),
+      name: order.shippingAddress?.street || 'Guest',
+      email: order.shippingAddress?.phone || 'guest@example.com',
+      phone: order.shippingAddress?.phone || 'N/A',
+      address: `${order.shippingAddress?.street}, ${order.shippingAddress?.city}`,
+      total: order.totalPrice || 0,
+      status: order.status,
+      notes: order.notes || '',
+      date: order.createdAt,
+      itemCount: order.orderItems?.length || 0,
+      isPaid: order.isPaid
+    }));
+
+    res.json({
+      success: true,
+      orders: transformedOrders,
+      totalPages: Math.ceil(total / limit),
+      pagination: {
+        current: page,
+        total: Math.ceil(total / limit),
+        count: orders.length,
+        totalRecords: total
+      }
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// GET ORDER BY ID - Must be after pagination routes
 router.get('/:id', async (req, res) => {
   try {
     const order = await Order.findById(req.params.id).populate('user', 'name email');
@@ -231,27 +252,6 @@ router.get('/:id', async (req, res) => {
     res.json({
       success: true,
       order
-    });
-
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
-
-// GET ALL ORDERS (NO PAGINATION)
-router.get('/', async (req, res) => {
-  try {
-    const orders = await Order.find({})
-      .populate('user', 'name email')
-      .sort({ createdAt: -1 });
-
-    res.json({
-      success: true,
-      count: orders.length,
-      orders
     });
 
   } catch (error) {
