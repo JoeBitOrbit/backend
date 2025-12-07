@@ -17,7 +17,14 @@ const generateToken = (id, role) => {
 // @desc    Register a new user
 router.post('/register', async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, firstName, lastName, email, password } = req.body;
+    
+    // Combine firstName/lastName if provided separately, otherwise use name
+    const fullName = name || (firstName && lastName ? `${firstName} ${lastName}` : firstName || lastName || '');
+    
+    if (!fullName || !email || !password) {
+      return res.status(400).json({ message: 'name/firstName, email, and password are required' });
+    }
 
     const userExists = await User.findOne({ email });
     if (userExists) {
@@ -25,7 +32,7 @@ router.post('/register', async (req, res) => {
     }
 
     const user = await User.create({
-      name,
+      name: fullName,
       email,
       password
     });
