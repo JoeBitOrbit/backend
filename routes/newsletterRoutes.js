@@ -1,6 +1,7 @@
 import express from 'express';
 import User from '../models/User.js';
 import { authenticateToken, authorizeRole } from '../middleware/auth.js';
+import { sendEmail } from '../utils/emailService.js';
 
 const router = express.Router();
 
@@ -29,12 +30,27 @@ router.post('/send-otp', async (req, res) => {
     
     otpStore.set(email, { otp, expiresAt });
 
-    // TODO: Send OTP via email service
-    console.log(`OTP for ${email}: ${otp}`);
+    // Send OTP via email
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #333;">Newsletter Subscription</h2>
+        <p>Hi there,</p>
+        <p>Thank you for subscribing to the Nikola Newsletter! Please use the OTP below to verify your email:</p>
+        <div style="background-color: #f0f0f0; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0;">
+          <h1 style="color: #007bff; margin: 0; letter-spacing: 5px;">${otp}</h1>
+        </div>
+        <p style="color: #666; font-size: 14px;">This OTP is valid for 10 minutes.</p>
+        <p>If you didn't request this, please ignore this email.</p>
+        <p>Best regards,<br/>Nikola Team</p>
+      </div>
+    `;
+
+    await sendEmail(email, 'Nikola Newsletter - Verify Your Email', html);
 
     res.json({ message: 'OTP sent to email', email });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error sending OTP:', error);
+    res.status(500).json({ message: 'Failed to send OTP: ' + error.message });
   }
 });
 
@@ -165,12 +181,36 @@ router.post('/broadcast', authenticateToken, authorizeRole(['admin']), async (re
       'email'
     );
 
-    // TODO: Send broadcast emails
-    console.log(`Broadcasting "${subject}" to ${subscribers.length} subscribers`);
+    // Send emails to all subscribers
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #333;">${subject}</h2>
+        <div style="line-height: 1.6; color: #555;">
+          ${message}
+        </div>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+        <p style="color: #999; font-size: 12px;">© Nikola Fashion. All rights reserved.</p>
+      </div>
+    `;
+
+    let sentCount = 0;
+    const errors = [];
+
+    for (const subscriber of subscribers) {
+      try {
+        await sendEmail(subscriber.email, subject, html);
+        sentCount++;
+      } catch (error) {
+        errors.push({ email: subscriber.email, error: error.message });
+      }
+    }
 
     res.json({
       message: 'Broadcast sent',
       recipientCount: subscribers.length,
+      sentCount,
+      failedCount: errors.length,
+      errors: errors.length > 0 ? errors : undefined,
       subject,
       type: type || 'general'
     });
