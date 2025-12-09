@@ -46,7 +46,11 @@ const userSchema = new mongoose.Schema({
       default: 1
     },
     price: Number
-  }]
+  }],
+  isNewsletterSubscribed: {
+    type: Boolean,
+    default: false
+  }
 }, {
   timestamps: true
 });

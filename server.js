@@ -20,7 +20,6 @@ import adminRoutes from './routes/adminRoutes.js';
 import ticketRoutes from './routes/ticketRoutes.js';
 import cartRoutes from './routes/cartRoutes.js';
 import newsletterRoutes from './routes/newsletterRoutes.js';
-import themeRoutes from './routes/themeRoutes.js';
 
 // Connect to database
 connectDB();
@@ -61,7 +60,6 @@ app.use('/api/products', productRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/admin/themes', themeRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/newsletter', newsletterRoutes);
