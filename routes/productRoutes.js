@@ -77,7 +77,10 @@ router.get('/', async (req, res) => {
     const { category, featured } = req.query;
     let query = {};
     
-    if (category) query.category = category;
+    if (category) {
+      // Case-insensitive category filter
+      query.category = { $regex: category, $options: 'i' };
+    }
     if (featured === 'true') query.featured = true;
 
     const products = await Product.find(query);
