@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-const christmasModeSchema = new mongoose.Schema({
+const holidayModeSchema = new mongoose.Schema({
   enabled: {
     type: Boolean,
     default: false
@@ -22,9 +22,9 @@ const christmasModeSchema = new mongoose.Schema({
     default: Date.now
   }
 }, {
-  collection: 'christmas_mode'
+  collection: 'holiday_mode'
 });
 
-const ChristmasMode = mongoose.model('ChristmasMode', christmasModeSchema);
+const HolidayMode = mongoose.model('HolidayMode', holidayModeSchema);
 
-export default ChristmasMode;
+export default HolidayMode;

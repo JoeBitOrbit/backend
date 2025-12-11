@@ -20,8 +20,8 @@ import adminRoutes from './routes/adminRoutes.js';
 import ticketRoutes from './routes/ticketRoutes.js';
 import cartRoutes from './routes/cartRoutes.js';
 import newsletterRoutes from './routes/newsletterRoutes.js';
-import christmasRoutes from './routes/christmasRoutes.js';
-import christmasFeaturesRoutes from './routes/christmasFeatures.js';
+import holidayRoutes from './routes/christmasRoutes.js';
+import holidayFeaturesRoutes from './routes/christmasFeatures.js';
 
 // Connect to database
 connectDB();
@@ -65,8 +65,8 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/newsletter', newsletterRoutes);
-app.use('/api/christmas', christmasRoutes);
-app.use('/api/christmas-features', christmasFeaturesRoutes);
+app.use('/api/holiday', holidayRoutes);
+app.use('/api/holiday-features', holidayFeaturesRoutes);
 
 // Serve static files from React app in production
 if (process.env.NODE_ENV === 'production') {

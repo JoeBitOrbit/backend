@@ -1,14 +1,14 @@
 import express from 'express';
-import ChristmasMode from '../models/ChristmasMode.js';
+import HolidayMode from '../models/ChristmasMode.js';
 import { authenticateToken, authorizeRole } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Initialize Christmas Mode collection if it doesn't exist
-async function getOrCreateChristmasMode() {
-  let mode = await ChristmasMode.findOne();
+// Initialize Holiday Mode collection if it doesn't exist
+async function getOrCreateHolidayMode() {
+  let mode = await HolidayMode.findOne();
   if (!mode) {
-    mode = new ChristmasMode({
+    mode = new HolidayMode({
       enabled: false,
       discount: 25,
       snowflakesEnabled: true
@@ -18,12 +18,12 @@ async function getOrCreateChristmasMode() {
   return mode;
 }
 
-// @route   GET /api/christmas/status
-// @desc    Get current Christmas mode status (public)
+// @route   GET /api/holiday/status
+// @desc    Get current Holiday mode status (public)
 // @access  Public
 router.get('/status', async (req, res) => {
   try {
-    const mode = await getOrCreateChristmasMode();
+    const mode = await getOrCreateHolidayMode();
     res.json({
       enabled: mode.enabled,
       discount: mode.discount,
@@ -35,16 +35,16 @@ router.get('/status', async (req, res) => {
   }
 });
 
-// @route   POST /api/christmas/toggle
-// @desc    Toggle Christmas mode ON/OFF
+// @route   POST /api/holiday/toggle
+// @desc    Toggle Holiday mode ON/OFF
 // @access  Admin only
 router.post('/toggle', authenticateToken, authorizeRole(['admin']), async (req, res) => {
   try {
     const { enabled, discount, snowflakesEnabled } = req.body;
 
-    let mode = await ChristmasMode.findOne();
+    let mode = await HolidayMode.findOne();
     if (!mode) {
-      mode = new ChristmasMode();
+      mode = new HolidayMode();
     }
 
     if (enabled !== undefined) mode.enabled = enabled;
@@ -57,7 +57,7 @@ router.post('/toggle', authenticateToken, authorizeRole(['admin']), async (req, 
     await mode.save();
 
     res.json({
-      message: 'Christmas mode updated',
+      message: 'Holiday mode updated',
       mode: {
         enabled: mode.enabled,
         discount: mode.discount,
@@ -70,8 +70,8 @@ router.post('/toggle', authenticateToken, authorizeRole(['admin']), async (req, 
   }
 });
 
-// @route   PUT /api/christmas/discount
-// @desc    Update Christmas discount percentage
+// @route   PUT /api/holiday/discount
+// @desc    Update Holiday discount percentage
 // @access  Admin only
 router.put('/discount', authenticateToken, authorizeRole(['admin']), async (req, res) => {
   try {
@@ -81,9 +81,9 @@ router.put('/discount', authenticateToken, authorizeRole(['admin']), async (req,
       return res.status(400).json({ message: 'Discount must be between 0 and 100' });
     }
 
-    let mode = await ChristmasMode.findOne();
+    let mode = await HolidayMode.findOne();
     if (!mode) {
-      mode = new ChristmasMode();
+      mode = new HolidayMode();
     }
 
     mode.discount = discount;

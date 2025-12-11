@@ -16,9 +16,14 @@ const productSchema = new mongoose.Schema({
     min: 0
   },
   category: {
-    type: String,
-    required: true,
-    enum: ['men', 'women', 'kids', 'accessories']
+    type: [String],
+    default: [],
+    validate: {
+      validator: function(arr) {
+        return arr.length > 0;
+      },
+      message: 'At least one category is required'
+    }
   },
   sizes: [{
     type: String,
